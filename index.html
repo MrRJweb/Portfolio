@@ -1,284 +1,612 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  motion,
-  useScroll,
-  useTransform,
-  MotionValue,
-} from 'framer-motion';
-import {
-  Mail,
-  Phone,
-  ExternalLink,
-} from 'lucide-react';
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-/* ============================================================
-   CONTACT / IDENTITY CONSTANTS — edit in one place
-   ============================================================ */
-const IDENTITY = {
-  name: 'MR.RJ Web Montreal',
-  heroHeading: 'MR.RJ Web', // kept short so the huge nowrap h1 never overflows
-  email: 'mr.rjwebmontreal@gmail.com',
-  phone: '+1 (514) 655-9758',
-  phoneHref: 'tel:+15146559758',
-};
+<!-- Primary SEO -->
+<title>MR.RJ Web Montreal — Web Designer & Full Stack Developer</title>
+<meta name="description" content="MR.RJ Web Montreal — a Montreal-based web designer and full stack developer crafting striking, modern, conversion-focused websites. View live projects and services." />
+<meta name="keywords" content="MR.RJ, web design Montreal, full stack developer Montreal, UI/UX design, website developer, freelance web designer, motion design, branding" />
+<meta name="author" content="MR.RJ Web Montreal" />
+<meta name="robots" content="index, follow" />
 
-/* ============================================================
-   REUSABLE COMPONENTS (unchanged from template)
-   ============================================================ */
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="MR.RJ Web Montreal — Web Designer & Full Stack Developer" />
+<meta property="og:description" content="Montreal-based web designer and full stack developer crafting striking, modern, conversion-focused websites. View live projects and services." />
+<meta property="og:locale" content="en_CA" />
 
-interface FadeInProps {
-  children: React.ReactNode;
-  delay?: number;
-  duration?: number;
-  x?: number;
-  y?: number;
-  className?: string;
-  as?: keyof JSX.IntrinsicElements;
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="MR.RJ Web Montreal — Web Designer & Full Stack Developer" />
+<meta name="twitter:description" content="Montreal-based web designer and full stack developer crafting striking, modern websites. View live projects and services." />
+
+<!-- Kanit font, weights 300-900 -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230C0C0C'/%3E%3Ctext x='32' y='42' font-family='Arial' font-size='26' font-weight='900' text-anchor='middle' fill='%23BBCCD7'%3ERJ%3C/text%3E%3C/svg%3E" />
+
+<style>
+/* ============ GLOBAL ============ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #0C0C0C; font-family: 'Kanit', sans-serif; }
+html { scroll-behavior: smooth; }
+img { display: block; }
+a { text-decoration: none; }
+
+.wrapper { background: #0C0C0C; overflow-x: clip; }
+
+.hero-heading {
+  background: linear-gradient(180deg, #646973 0%, #BBCCD7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
-const FadeIn: React.FC<FadeInProps> = ({
-  children,
-  delay = 0,
-  duration = 0.7,
-  x = 0,
-  y = 30,
-  className = '',
-  as = 'div',
-}) => {
-  const MotionComponent = useMemo(
-    () => motion.create(as as React.ElementType),
-    [as]
-  );
-  return (
-    <MotionComponent
-      initial={{ opacity: 0, x, y }}
-      whileInView={{ opacity: 1, x: 0, y: 0 }}
-      viewport={{ once: true, margin: '50px', amount: 0 }}
-      transition={{ delay, duration, ease: [0.25, 0.1, 0.25, 1] }}
-      className={className}
-    >
-      {children}
-    </MotionComponent>
-  );
-};
+/* ============ FADE-IN ANIMATION ============ */
+[data-fade] {
+  opacity: 0;
+  transform: translate(var(--fade-x, 0px), var(--fade-y, 30px));
+  transition:
+    opacity var(--fade-duration, 0.7s) cubic-bezier(0.25, 0.1, 0.25, 1) var(--fade-delay, 0s),
+    transform var(--fade-duration, 0.7s) cubic-bezier(0.25, 0.1, 0.25, 1) var(--fade-delay, 0s);
+  will-change: opacity, transform;
+}
+[data-fade].is-visible { opacity: 1; transform: translate(0, 0); }
 
-interface MagnetProps {
-  children: React.ReactNode;
-  padding?: number;
-  strength?: number;
-  activeTransition?: string;
-  inactiveTransition?: string;
-  className?: string;
+@media (prefers-reduced-motion: reduce) {
+  [data-fade] { opacity: 1; transform: none; transition: none; }
+  html { scroll-behavior: auto; }
 }
 
-const Magnet: React.FC<MagnetProps> = ({
-  children,
-  padding = 100,
-  strength = 2,
-  activeTransition = 'transform 0.3s ease-out',
-  inactiveTransition = 'transform 0.6s ease-in-out',
-  className = '',
-}) => {
-  const magnetRef = useRef<HTMLDivElement>(null);
-  const [isActive, setIsActive] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+/* ============ BUTTONS ============ */
+.contact-btn {
+  display: inline-block;
+  border-radius: 9999px;
+  color: #FFFFFF;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.75rem 2rem;
+  font-size: 0.75rem;
+  background: linear-gradient(123deg, #18011F 7%, #B600A8 37%, #7621B0 72%, #BE4C00 100%);
+  box-shadow: 0px 4px 4px rgba(181, 1, 167, 0.25), 4px 4px 12px #7721B1 inset;
+  outline: 2px solid #FFFFFF;
+  outline-offset: -3px;
+  white-space: nowrap;
+}
+@media (min-width: 640px) { .contact-btn { padding: 0.875rem 2.5rem; font-size: 0.875rem; } }
+@media (min-width: 768px) { .contact-btn { padding: 1rem 3rem; font-size: 1rem; } }
 
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!magnetRef.current) return;
-      const rect = magnetRef.current.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      const distX = Math.abs(centerX - e.clientX);
-      const distY = Math.abs(centerY - e.clientY);
+.ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 2px solid #D7E2EA;
+  color: #D7E2EA;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.75rem 2rem;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  transition: background-color 0.2s;
+  background: transparent;
+}
+.ghost-btn:hover { background: rgba(215, 226, 234, 0.1); }
+@media (min-width: 640px) { .ghost-btn { padding: 0.875rem 2.5rem; font-size: 1rem; } }
+.ghost-btn svg { width: 1rem; height: 1rem; flex-shrink: 0; }
 
-      if (distX < rect.width / 2 + padding && distY < rect.height / 2 + padding) {
-        setIsActive(true);
-        setPosition({
-          x: (e.clientX - centerX) / strength,
-          y: (e.clientY - centerY) / strength,
-        });
-      } else {
-        setIsActive(false);
-        setPosition({ x: 0, y: 0 });
-      }
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [padding, strength]);
+/* ============ 1. HERO ============ */
+.hero {
+  height: 100vh; height: 100svh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: clip;
+}
+.hero nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 1.5rem 0;
+}
+@media (min-width: 768px) { .hero nav { padding: 2rem 2.5rem 0; } }
+.hero nav a {
+  color: #D7E2EA;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.875rem;
+  transition: opacity 0.2s;
+}
+.hero nav a:hover { opacity: 0.7; }
+@media (min-width: 768px) { .hero nav a { font-size: 1.125rem; } }
+@media (min-width: 1024px) { .hero nav a { font-size: 1.4rem; } }
 
-  return (
-    <div ref={magnetRef} className={className}>
-      <div
-        style={{
-          transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
-          transition: isActive ? activeTransition : inactiveTransition,
-          willChange: 'transform',
-        }}
-      >
-        {children}
-      </div>
+.hero-h1-wrap { overflow: hidden; }
+.hero h1 {
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  white-space: nowrap;
+  width: 100%;
+  text-align: center;
+  font-size: 14vw;
+  margin-top: 1.5rem;
+}
+@media (min-width: 640px) { .hero h1 { font-size: 15vw; margin-top: 1rem; } }
+@media (min-width: 768px) { .hero h1 { font-size: 16vw; margin-top: -1.25rem; } }
+@media (min-width: 1024px) { .hero h1 { font-size: 17.5vw; } }
+
+.hero-body { position: relative; flex: 1; display: flex; align-items: flex-end; overflow-x: clip; }
+
+.hero-portrait {
+  position: absolute;
+  left: 50%;
+  z-index: 10;
+  width: 280px;
+  top: 50%;
+  --fade-base-transform: translate(-50%, -50%);
+}
+@media (min-width: 640px) {
+  .hero-portrait { width: 360px; top: auto; bottom: 0; --fade-base-transform: translate(-50%, 0); }
+}
+@media (min-width: 768px) { .hero-portrait { width: 440px; } }
+@media (min-width: 1024px) { .hero-portrait { width: 520px; } }
+/* portrait uses its own fade rules because of the centering transform */
+.hero-portrait[data-fade] {
+  transform: var(--fade-base-transform) translate(0, 30px);
+}
+.hero-portrait[data-fade].is-visible {
+  transform: var(--fade-base-transform) translate(0, 0);
+}
+.hero-portrait img { width: 100%; height: auto; user-select: none; -webkit-user-drag: none; }
+.magnet-inner { will-change: transform; }
+
+.hero-bottom {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 1.5rem 1.75rem;
+  position: relative;
+  z-index: 20;
+}
+@media (min-width: 640px) { .hero-bottom { padding-bottom: 2rem; } }
+@media (min-width: 768px) { .hero-bottom { padding: 0 2.5rem 2.5rem; } }
+.hero-bottom p {
+  color: #D7E2EA;
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  line-height: 1.375;
+  font-size: clamp(0.75rem, 1.4vw, 1.5rem);
+  max-width: 160px;
+}
+@media (min-width: 640px) { .hero-bottom p { max-width: 220px; } }
+@media (min-width: 768px) { .hero-bottom p { max-width: 260px; } }
+
+/* ============ 2. MARQUEE ============ */
+.marquee {
+  background: #0C0C0C;
+  padding: 6rem 0 2.5rem;
+  overflow: hidden;
+}
+@media (min-width: 640px) { .marquee { padding-top: 8rem; } }
+@media (min-width: 768px) { .marquee { padding-top: 10rem; } }
+.marquee-rows { display: flex; flex-direction: column; gap: 0.75rem; }
+.marquee-row { display: flex; gap: 0.75rem; will-change: transform; }
+.marquee-row img {
+  width: 420px;
+  height: 270px;
+  border-radius: 1rem;
+  object-fit: cover;
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* ============ 3. ABOUT ============ */
+.about {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5rem 1.25rem;
+}
+@media (min-width: 640px) { .about { padding: 5rem 2rem; } }
+@media (min-width: 768px) { .about { padding: 5rem 2.5rem; } }
+
+.about-deco { position: absolute; }
+.about-deco img { width: 100%; height: auto; user-select: none; -webkit-user-drag: none; }
+.deco-tl { top: 4%; left: 1%; width: 120px; }
+.deco-bl { bottom: 8%; left: 3%; width: 100px; }
+.deco-tr { top: 4%; right: 1%; width: 120px; }
+.deco-br { bottom: 8%; right: 3%; width: 130px; }
+@media (min-width: 640px) {
+  .deco-tl { left: 2%; width: 160px; }
+  .deco-bl { left: 6%; width: 140px; }
+  .deco-tr { right: 2%; width: 160px; }
+  .deco-br { right: 6%; width: 170px; }
+}
+@media (min-width: 768px) {
+  .deco-tl { left: 4%; width: 210px; }
+  .deco-bl { left: 10%; width: 180px; }
+  .deco-tr { right: 4%; width: 210px; }
+  .deco-br { right: 10%; width: 220px; }
+}
+
+.about-inner { display: flex; flex-direction: column; align-items: center; gap: 2.5rem; }
+@media (min-width: 640px) { .about-inner { gap: 3.5rem; } }
+@media (min-width: 768px) { .about-inner { gap: 4rem; } }
+
+.section-heading {
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  text-align: center;
+  font-size: clamp(3rem, 12vw, 160px);
+}
+
+.about-text-block { display: flex; flex-direction: column; align-items: center; gap: 4rem; }
+@media (min-width: 640px) { .about-text-block { gap: 5rem; } }
+@media (min-width: 768px) { .about-text-block { gap: 6rem; } }
+
+.animated-text {
+  color: #D7E2EA;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.625;
+  max-width: 560px;
+  font-size: clamp(1rem, 2vw, 1.35rem);
+}
+.animated-text .char { position: relative; }
+.animated-text .char .ghost { opacity: 0.2; }
+.animated-text .char .lit { position: absolute; left: 0; top: 0; opacity: 0; }
+
+/* ============ 4. SERVICES + PRICING (white) ============ */
+.services {
+  background: #FFFFFF;
+  border-top-left-radius: 40px;
+  border-top-right-radius: 40px;
+  padding: 5rem 1.25rem;
+}
+@media (min-width: 640px) {
+  .services { border-top-left-radius: 50px; border-top-right-radius: 50px; padding: 6rem 2rem; }
+}
+@media (min-width: 768px) {
+  .services { border-top-left-radius: 60px; border-top-right-radius: 60px; padding: 8rem 2.5rem; }
+}
+.services .section-heading { color: #0C0C0C; margin-bottom: 4rem; }
+@media (min-width: 640px) { .services .section-heading { margin-bottom: 5rem; } }
+@media (min-width: 768px) { .services .section-heading { margin-bottom: 7rem; } }
+
+.services-list { max-width: 64rem; margin: 0 auto; }
+.service-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  padding: 2rem 0;
+  border-bottom: 1px solid rgba(12, 12, 12, 0.15);
+}
+@media (min-width: 640px) { .service-item { gap: 2.5rem; padding: 2.5rem 0; } }
+@media (min-width: 768px) { .service-item { gap: 4rem; padding: 3rem 0; } }
+.service-number {
+  font-weight: 900;
+  color: #0C0C0C;
+  line-height: 1;
+  font-size: clamp(3rem, 10vw, 140px);
+}
+.service-info { padding-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.service-info h3 {
+  color: #0C0C0C;
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: clamp(1rem, 2.2vw, 2.1rem);
+}
+.service-info p {
+  color: #0C0C0C;
+  font-weight: 300;
+  line-height: 1.625;
+  max-width: 42rem;
+  font-size: clamp(0.85rem, 1.6vw, 1.25rem);
+  opacity: 0.6;
+}
+
+/* ============ 5. PROJECTS ============ */
+.projects {
+  position: relative;
+  z-index: 10;
+  background: #0C0C0C;
+  border-top-left-radius: 40px;
+  border-top-right-radius: 40px;
+  margin-top: -2.5rem;
+  padding: 5rem 1.25rem;
+}
+@media (min-width: 640px) {
+  .projects { border-top-left-radius: 50px; border-top-right-radius: 50px; margin-top: -3rem; padding: 6rem 2rem; }
+}
+@media (min-width: 768px) {
+  .projects { border-top-left-radius: 60px; border-top-right-radius: 60px; margin-top: -3.5rem; padding: 8rem 2.5rem; }
+}
+.projects .section-heading { margin-bottom: 4rem; }
+@media (min-width: 640px) { .projects .section-heading { margin-bottom: 5rem; } }
+@media (min-width: 768px) { .projects .section-heading { margin-bottom: 7rem; } }
+
+.projects-stack { max-width: 72rem; margin: 0 auto; }
+.card-slot { height: 85vh; }
+.project-card {
+  position: sticky;
+  border-radius: 40px;
+  border: 2px solid #D7E2EA;
+  background: #0C0C0C;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  will-change: transform;
+  transform-origin: center top;
+}
+@media (min-width: 640px) { .project-card { border-radius: 50px; padding: 1.5rem; gap: 1.5rem; } }
+@media (min-width: 768px) { .project-card { border-radius: 60px; padding: 2rem; } }
+
+.card-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.card-title-group { display: flex; align-items: flex-start; gap: 1rem; }
+@media (min-width: 640px) { .card-title-group { gap: 2rem; } }
+.card-number {
+  font-weight: 900;
+  line-height: 1;
+  font-size: clamp(3rem, 10vw, 140px);
+}
+.card-meta { padding-top: 0.5rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.card-category {
+  color: #D7E2EA;
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: clamp(0.7rem, 1.2vw, 1rem);
+  opacity: 0.6;
+}
+.card-name {
+  color: #D7E2EA;
+  font-weight: 500;
+  text-transform: uppercase;
+  line-height: 1.25;
+  font-size: clamp(1.1rem, 2.4vw, 2.1rem);
+}
+.card-desc {
+  color: #D7E2EA;
+  font-weight: 300;
+  line-height: 1.625;
+  max-width: 28rem;
+  font-size: clamp(0.8rem, 1.3vw, 1rem);
+  opacity: 0.6;
+  display: none;
+}
+@media (min-width: 640px) { .card-desc { display: block; } }
+
+.card-live {
+  position: relative;
+  flex: 1;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 1px solid rgba(215, 226, 234, 0.25);
+  background: #0C0C0C;
+}
+@media (min-width: 640px) { .card-live { border-radius: 36px; } }
+@media (min-width: 768px) { .card-live { border-radius: 44px; } }
+.live-badge {
+  position: absolute;
+  top: 1rem; left: 1rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background: rgba(12, 12, 12, 0.8);
+  backdrop-filter: blur(6px);
+  padding: 0.375rem 1rem;
+  color: #D7E2EA;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 10px;
+  font-weight: 500;
+  pointer-events: none;
+}
+@media (min-width: 640px) { .live-badge { font-size: 0.75rem; } }
+.live-dot {
+  width: 0.5rem; height: 0.5rem;
+  border-radius: 9999px;
+  background: #EF4444;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.card-live iframe {
+  width: 100%;
+  border: 0;
+  height: clamp(320px, 52vh, 560px);
+  display: block;
+  background: #fff;
+}
+
+/* ============ 6. CONTACT + FOOTER ============ */
+.contact {
+  background: #0C0C0C;
+  padding: 5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.5rem;
+}
+@media (min-width: 640px) { .contact { padding: 6rem 2rem; gap: 3.5rem; } }
+@media (min-width: 768px) { .contact { padding: 8rem 2.5rem; } }
+
+.contact-links { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+@media (min-width: 640px) { .contact-links { gap: 1.5rem; } }
+.contact-links a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #D7E2EA;
+  font-weight: 500;
+  font-size: clamp(1.1rem, 3vw, 2rem);
+  transition: opacity 0.2s;
+}
+.contact-links a:hover { opacity: 0.7; }
+.contact-links svg { width: 1.5rem; height: 1.5rem; flex-shrink: 0; }
+@media (min-width: 640px) { .contact-links svg { width: 2rem; height: 2rem; } }
+
+footer {
+  background: #0C0C0C;
+  border-top: 1px solid rgba(215, 226, 234, 0.15);
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+@media (min-width: 640px) { footer { flex-direction: row; } }
+@media (min-width: 768px) { footer { padding: 2rem 2.5rem; } }
+footer span {
+  color: #D7E2EA;
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+  opacity: 0.6;
+  text-align: center;
+}
+@media (min-width: 640px) { footer span { font-size: 0.875rem; } }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- ============ 1. HERO ============ -->
+  <section class="hero">
+    <nav data-fade style="--fade-y:-20px; --fade-delay:0s;">
+      <a href="#about">About</a>
+      <a href="#projects">Projects</a>
+      <a href="#contact">Contact</a>
+    </nav>
+
+    <div class="hero-h1-wrap">
+      <h1 class="hero-heading" data-fade style="--fade-y:40px; --fade-delay:0.15s;">MR.RJ Web</h1>
     </div>
-  );
-};
 
-interface CharProps {
-  char: string;
-  progress: MotionValue<number>;
-  range: [number, number];
-}
-
-const Char: React.FC<CharProps> = ({ char, progress, range }) => {
-  const opacity = useTransform(progress, range, [0.2, 1]);
-  return (
-    <span className="relative">
-      <span className="opacity-20">{char}</span>
-      <motion.span style={{ opacity }} className="absolute left-0 top-0">
-        {char}
-      </motion.span>
-    </span>
-  );
-};
-
-interface AnimatedTextProps {
-  text: string;
-  className?: string;
-  style?: React.CSSProperties;
-}
-
-const AnimatedText: React.FC<AnimatedTextProps> = ({ text, className = '', style }) => {
-  const targetRef = useRef<HTMLParagraphElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: targetRef,
-    offset: ['start 0.8', 'end 0.2'],
-  });
-  const chars = text.split('');
-  return (
-    <p ref={targetRef} className={className} style={style}>
-      {chars.map((char, i) => (
-        <Char
-          key={i}
-          char={char}
-          progress={scrollYProgress}
-          range={[i / chars.length, (i + 1) / chars.length]}
-        />
-      ))}
-    </p>
-  );
-};
-
-const ContactButton: React.FC<{ href?: string }> = ({
-  href = `mailto:${IDENTITY.email}`,
-}) => (
-  <a
-    href={href}
-    className="inline-block rounded-full text-white font-medium uppercase tracking-widest px-8 py-3 sm:px-10 sm:py-3.5 md:px-12 md:py-4 text-xs sm:text-sm md:text-base"
-    style={{
-      background:
-        'linear-gradient(123deg, #18011F 7%, #B600A8 37%, #7621B0 72%, #BE4C00 100%)',
-      boxShadow:
-        '0px 4px 4px rgba(181, 1, 167, 0.25), 4px 4px 12px #7721B1 inset',
-      outline: '2px solid #FFFFFF',
-      outlineOffset: '-3px',
-    }}
-  >
-    Contact Me
-  </a>
-);
-
-const LiveProjectButton: React.FC<{ href: string; label?: string }> = ({
-  href,
-  label = 'Live Project',
-}) => (
-  <a
-    href={href}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="inline-flex items-center gap-2 rounded-full border-2 border-[#D7E2EA] text-[#D7E2EA] font-medium uppercase tracking-widest px-8 py-3 sm:px-10 sm:py-3.5 text-sm sm:text-base hover:bg-[#D7E2EA]/10 transition-colors duration-200 whitespace-nowrap"
-  >
-    {label}
-    <ExternalLink className="w-4 h-4" aria-hidden="true" />
-  </a>
-);
-
-/* ============================================================
-   1. HERO SECTION
-   ============================================================ */
-
-const NAV_LINKS = [
-  { label: 'About', href: '#about' },
-  { label: 'Projects', href: '#projects' },
-  { label: 'Contact', href: '#contact' },
-];
-
-const HeroSection: React.FC = () => (
-  <section className="h-screen flex flex-col" style={{ overflowX: 'clip' }}>
-    <FadeIn as="nav" delay={0} y={-20}>
-      <div className="flex justify-between items-center px-6 md:px-10 pt-6 md:pt-8">
-        {NAV_LINKS.map((link) => (
-          <a
-            key={link.label}
-            href={link.href}
-            className="text-[#D7E2EA] font-medium uppercase tracking-wider text-sm md:text-lg lg:text-[1.4rem] hover:opacity-70 transition-opacity duration-200"
-          >
-            {link.label}
-          </a>
-        ))}
+    <div class="hero-body">
+      <div class="hero-portrait" data-fade style="--fade-delay:0.6s;">
+        <div class="magnet-inner" id="magnet" data-padding="150" data-strength="3">
+          <img src="https://shrug-person-78902957.figma.site/_components/v2/d24c01ad3a56fc65e942a1f501eb73db42d7cf9a/Rectangle_40443.81459862.png"
+               alt="MR.RJ — Montreal web designer and full stack developer" draggable="false" />
+        </div>
       </div>
-    </FadeIn>
 
-    <div className="overflow-hidden">
-      <FadeIn delay={0.15} y={40}>
-        <h1 className="hero-heading font-black uppercase tracking-tight leading-none whitespace-nowrap w-full text-center text-[14vw] sm:text-[15vw] md:text-[16vw] lg:text-[17.5vw] mt-6 sm:mt-4 md:-mt-5">
-          {IDENTITY.heroHeading}
-        </h1>
-      </FadeIn>
-    </div>
-
-    <div className="relative flex-1 flex items-end" style={{ overflowX: 'clip' }}>
-      <FadeIn
-        delay={0.6}
-        y={30}
-        className="absolute left-1/2 -translate-x-1/2 z-10 top-1/2 -translate-y-1/2 sm:top-auto sm:translate-y-0 sm:bottom-0 w-[280px] sm:w-[360px] md:w-[440px] lg:w-[520px]"
-      >
-        <Magnet
-          padding={150}
-          strength={3}
-          activeTransition="transform 0.3s ease-out"
-          inactiveTransition="transform 0.6s ease-in-out"
-        >
-          <img
-            src="https://shrug-person-78902957.figma.site/_components/v2/d24c01ad3a56fc65e942a1f501eb73db42d7cf9a/Rectangle_40443.81459862.png"
-            alt="MR.RJ — Montreal web designer and full stack developer"
-            className="w-full h-auto"
-            draggable={false}
-          />
-        </Magnet>
-      </FadeIn>
-
-      <div className="w-full flex justify-between items-end px-6 md:px-10 pb-7 sm:pb-8 md:pb-10 relative z-20">
-        <FadeIn delay={0.35} y={20}>
-          <p
-            className="text-[#D7E2EA] font-light uppercase tracking-wide leading-snug max-w-[160px] sm:max-w-[220px] md:max-w-[260px]"
-            style={{ fontSize: 'clamp(0.75rem, 1.4vw, 1.5rem)' }}
-          >
-            web designer &amp; full stack developer crafting striking and
-            unforgettable websites in Montreal
-          </p>
-        </FadeIn>
-        <FadeIn delay={0.5} y={20}>
-          <ContactButton />
-        </FadeIn>
+      <div class="hero-bottom">
+        <p data-fade style="--fade-y:20px; --fade-delay:0.35s;">
+          web designer &amp; full stack developer crafting striking and unforgettable websites in Montreal
+        </p>
+        <span data-fade style="--fade-y:20px; --fade-delay:0.5s;">
+          <a class="contact-btn" href="mailto:mr.rjwebmontreal@gmail.com">Contact Me</a>
+        </span>
       </div>
     </div>
   </section>
-);
 
+  <!-- ============ 2. MARQUEE ============ -->
+  <section class="marquee" id="marquee">
+    <div class="marquee-rows">
+      <div class="marquee-row" id="marquee-row-1"></div>
+      <div class="marquee-row" id="marquee-row-2"></div>
+    </div>
+  </section>
+
+  <!-- ============ 3. ABOUT ============ -->
+  <section class="about" id="about">
+    <div class="about-deco deco-tl" data-fade style="--fade-x:-80px; --fade-y:0px; --fade-delay:0.1s; --fade-duration:0.9s;">
+      <img src="https://shrug-person-78902957.figma.site/_components/v2/ebb2b8f25d8e24d5f0a5ca8af4c950de81aa2fd7/moon_icon.11395d36.png" alt="" loading="lazy" draggable="false" />
+    </div>
+    <div class="about-deco deco-bl" data-fade style="--fade-x:-80px; --fade-y:0px; --fade-delay:0.25s; --fade-duration:0.9s;">
+      <img src="https://shrug-person-78902957.figma.site/_components/v2/ebb2b8f25d8e24d5f0a5ca8af4c950de81aa2fd7/p59_1.4659672e.png" alt="" loading="lazy" draggable="false" />
+    </div>
+    <div class="about-deco deco-tr" data-fade style="--fade-x:80px; --fade-y:0px; --fade-delay:0.15s; --fade-duration:0.9s;">
+      <img src="https://shrug-person-78902957.figma.site/_components/v2/ebb2b8f25d8e24d5f0a5ca8af4c950de81aa2fd7/lego_icon-1.703bb594.png" alt="" loading="lazy" draggable="false" />
+    </div>
+    <div class="about-deco deco-br" data-fade style="--fade-x:80px; --fade-y:0px; --fade-delay:0.3s; --fade-duration:0.9s;">
+      <img src="https://shrug-person-78902957.figma.site/_components/v2/ebb2b8f25d8e24d5f0a5ca8af4c950de81aa2fd7/Group_134-1.2e04f3ce.png" alt="" loading="lazy" draggable="false" />
+    </div>
+
+    <div class="about-inner">
+      <h2 class="section-heading hero-heading" data-fade style="--fade-y:40px;">About me</h2>
+      <div class="about-text-block">
+        <p class="animated-text" id="animated-text">I'm MR.RJ, a web designer and full stack developer based in Montreal. With more than five years of experience, i focus on web design, development, and user experience, and i truly enjoy working with businesses that aim to stand out and present their best image. Let's build something incredible together!</p>
+        <a class="contact-btn" href="mailto:mr.rjwebmontreal@gmail.com">Contact Me</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4. SERVICES + PRICING ============ -->
+  <section class="services" id="services">
+    <h2 class="section-heading" data-fade style="--fade-y:40px;">Services</h2>
+
+    <div class="services-list" id="services-list"></div>
+
+  </section>
+
+  <!-- ============ 5. PROJECTS ============ -->
+  <section class="projects" id="projects">
+    <h2 class="section-heading hero-heading" data-fade style="--fade-y:40px;">Project</h2>
+    <div class="projects-stack" id="projects-stack"></div>
+  </section>
+
+  <!-- ============ 6. CONTACT + FOOTER ============ -->
+  <section class="contact" id="contact">
+    <h2 class="section-heading hero-heading" data-fade style="--fade-y:40px;">Contact</h2>
+
+    <div class="contact-links" data-fade style="--fade-delay:0.15s;">
+      <a href="mailto:mr.rjwebmontreal@gmail.com">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        mr.rjwebmontreal@gmail.com
+      </a>
+      <a href="tel:+15146559758">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        +1 (514) 655-9758
+      </a>
+    </div>
+
+
+    <span data-fade style="--fade-delay:0.3s;">
+      <a class="contact-btn" href="mailto:mr.rjwebmontreal@gmail.com">Contact Me</a>
+    </span>
+  </section>
+
+  <footer>
+    <span id="footer-copy">© MR.RJ Web Montreal. All rights reserved.</span>
+    <span>Montréal, QC · +1 (514) 655-9758</span>
+  </footer>
+
+</div>
+
+<script>
 /* ============================================================
-   2. MARQUEE SECTION
+   DATA
    ============================================================ */
-
-const MARQUEE_IMAGES = [
+var MARQUEE_IMAGES = [
   'https://motionsites.ai/assets/hero-space-voyage-preview-eECLH3Yc.gif',
   'https://motionsites.ai/assets/hero-codenest-preview-Cgppc2qV.gif',
   'https://motionsites.ai/assets/hero-vex-ventures-preview-BczMFIiw.gif',
@@ -299,477 +627,223 @@ const MARQUEE_IMAGES = [
   'https://motionsites.ai/assets/hero-new-era-preview-CocuDUm9.gif',
   'https://motionsites.ai/assets/hero-wealth-preview-B70idl_u.gif',
   'https://motionsites.ai/assets/hero-luminex-preview-CxOP7ce6.gif',
-  'https://motionsites.ai/assets/hero-celestia-preview-0yO3jXO8.gif',
+  'https://motionsites.ai/assets/hero-celestia-preview-0yO3jXO8.gif'
 ];
 
-const MarqueeSection: React.FC = () => {
-  const sectionRef = useRef<HTMLElement>(null);
-  const [offset, setOffset] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!sectionRef.current) return;
-      const sectionTop =
-        sectionRef.current.getBoundingClientRect().top + window.scrollY;
-      setOffset((window.scrollY - sectionTop + window.innerHeight) * 0.3);
-    };
-    handleScroll();
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const row1 = MARQUEE_IMAGES.slice(0, 11);
-  const row2 = MARQUEE_IMAGES.slice(11);
-
-  const renderRow = (images: string[], keyPrefix: string) =>
-    [...images, ...images, ...images].map((src, i) => (
-      <img
-        key={`${keyPrefix}-${i}`}
-        src={src}
-        alt="Web design showcase"
-        loading="lazy"
-        className="rounded-2xl object-cover flex-shrink-0"
-        style={{ width: 420, height: 270 }}
-        draggable={false}
-      />
-    ));
-
-  return (
-    <section
-      ref={sectionRef}
-      className="bg-[#0C0C0C] pt-24 sm:pt-32 md:pt-40 pb-10 overflow-hidden"
-    >
-      <div className="flex flex-col gap-3">
-        <div
-          className="flex gap-3"
-          style={{
-            transform: `translateX(${offset - 200}px)`,
-            willChange: 'transform',
-          }}
-        >
-          {renderRow(row1, 'r1')}
-        </div>
-        <div
-          className="flex gap-3"
-          style={{
-            transform: `translateX(${-(offset - 200)}px)`,
-            willChange: 'transform',
-          }}
-        >
-          {renderRow(row2, 'r2')}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-/* ============================================================
-   3. ABOUT SECTION
-   ============================================================ */
-
-const ABOUT_TEXT =
-  "I'm MR.RJ, a web designer and full stack developer based in Montreal. With more than five years of experience, i focus on web design, development, and user experience, and i truly enjoy working with businesses that aim to stand out and present their best image. Let's build something incredible together!";
-
-const AboutSection: React.FC = () => (
-  <section
-    id="about"
-    className="relative min-h-screen flex items-center justify-center px-5 sm:px-8 md:px-10 py-20"
-  >
-    <FadeIn
-      delay={0.1}
-      x={-80}
-      y={0}
-      duration={0.9}
-      className="absolute top-[4%] left-[1%] sm:left-[2%] md:left-[4%] w-[120px] sm:w-[160px] md:w-[210px]"
-    >
-      <img
-        src="https://shrug-person-78902957.figma.site/_components/v2/ebb2b8f25d8e24d5f0a5ca8af4c950de81aa2fd7/moon_icon.11395d36.png"
-        alt=""
-        className="w-full h-auto"
-        loading="lazy"
-        draggable={false}
-      />
-    </FadeIn>
-    <FadeIn
-      delay={0.25}
-      x={-80}
-      y={0}
-      duration={0.9}
-      className="absolute bottom-[8%] left-[3%] sm:left-[6%] md:left-[10%] w-[100px] sm:w-[140px] md:w-[180px]"
-    >
-      <img
-        src="https://shrug-person-78902957.figma.site/_components/v2/ebb2b8f25d8e24d5f0a5ca8af4c950de81aa2fd7/p59_1.4659672e.png"
-        alt=""
-        className="w-full h-auto"
-        loading="lazy"
-        draggable={false}
-      />
-    </FadeIn>
-    <FadeIn
-      delay={0.15}
-      x={80}
-      y={0}
-      duration={0.9}
-      className="absolute top-[4%] right-[1%] sm:right-[2%] md:right-[4%] w-[120px] sm:w-[160px] md:w-[210px]"
-    >
-      <img
-        src="https://shrug-person-78902957.figma.site/_components/v2/ebb2b8f25d8e24d5f0a5ca8af4c950de81aa2fd7/lego_icon-1.703bb594.png"
-        alt=""
-        className="w-full h-auto"
-        loading="lazy"
-        draggable={false}
-      />
-    </FadeIn>
-    <FadeIn
-      delay={0.3}
-      x={80}
-      y={0}
-      duration={0.9}
-      className="absolute bottom-[8%] right-[3%] sm:right-[6%] md:right-[10%] w-[130px] sm:w-[170px] md:w-[220px]"
-    >
-      <img
-        src="https://shrug-person-78902957.figma.site/_components/v2/ebb2b8f25d8e24d5f0a5ca8af4c950de81aa2fd7/Group_134-1.2e04f3ce.png"
-        alt=""
-        className="w-full h-auto"
-        loading="lazy"
-        draggable={false}
-      />
-    </FadeIn>
-
-    <div className="flex flex-col items-center gap-10 sm:gap-14 md:gap-16">
-      <FadeIn delay={0} y={40}>
-        <h2
-          className="hero-heading font-black uppercase leading-none tracking-tight text-center"
-          style={{ fontSize: 'clamp(3rem, 12vw, 160px)' }}
-        >
-          About me
-        </h2>
-      </FadeIn>
-
-      <div className="flex flex-col items-center gap-16 sm:gap-20 md:gap-24">
-        <AnimatedText
-          text={ABOUT_TEXT}
-          className="text-[#D7E2EA] font-medium text-center leading-relaxed max-w-[560px]"
-          style={{ fontSize: 'clamp(1rem, 2vw, 1.35rem)' }}
-        />
-        <ContactButton />
-      </div>
-    </div>
-  </section>
-);
-
-/* ============================================================
-   4. SERVICES SECTION (white)
-   ============================================================ */
-
-const SERVICES = [
-  {
-    number: '01',
-    name: 'Web Design',
-    description:
-      'Designing clean, modern, and conversion-focused websites with attention to layout, typography, and user experience.',
-  },
-  {
-    number: '02',
-    name: 'Full Stack Development',
-    description:
-      'Building fast, secure, and scalable websites and web applications — from the front-end interface to the back-end logic and deployment.',
-  },
-  {
-    number: '03',
-    name: 'UI/UX Design',
-    description:
-      'Crafting intuitive interfaces and seamless user journeys that make digital products effortless to use and enjoyable to explore.',
-  },
-  {
-    number: '04',
-    name: 'Motion & Interaction',
-    description:
-      'Dynamic animations and scroll interactions that add energy and storytelling to brands, products, and digital experiences.',
-  },
-  {
-    number: '05',
-    name: 'Branding',
-    description:
-      'Crafting cohesive visual identities — from logos to full brand systems — that communicate a clear and memorable presence.',
-  },
+var SERVICES = [
+  { number: '01', name: 'Web Design', description: 'Designing clean, modern, and conversion-focused websites with attention to layout, typography, and user experience.' },
+  { number: '02', name: 'Full Stack Development', description: 'Building fast, secure, and scalable websites and web applications — from the front-end interface to the back-end logic and deployment.' },
+  { number: '03', name: 'UI/UX Design', description: 'Crafting intuitive interfaces and seamless user journeys that make digital products effortless to use and enjoyable to explore.' },
+  { number: '04', name: 'Motion & Interaction', description: 'Dynamic animations and scroll interactions that add energy and storytelling to brands, products, and digital experiences.' },
+  { number: '05', name: 'Branding', description: 'Crafting cohesive visual identities — from logos to full brand systems — that communicate a clear and memorable presence.' }
 ];
 
-
-const ServicesSection: React.FC = () => (
-  <section
-    id="services"
-    className="bg-white rounded-t-[40px] sm:rounded-t-[50px] md:rounded-t-[60px] px-5 sm:px-8 md:px-10 py-20 sm:py-24 md:py-32"
-  >
-    <FadeIn y={40}>
-      <h2
-        className="text-[#0C0C0C] font-black uppercase text-center mb-16 sm:mb-20 md:mb-28"
-        style={{ fontSize: 'clamp(3rem, 12vw, 160px)' }}
-      >
-        Services
-      </h2>
-    </FadeIn>
-
-    <div className="max-w-5xl mx-auto">
-      {SERVICES.map((service, i) => (
-        <FadeIn key={service.number} delay={i * 0.1}>
-          <div
-            className="flex items-start gap-6 sm:gap-10 md:gap-16 py-8 sm:py-10 md:py-12"
-            style={{ borderBottom: '1px solid rgba(12, 12, 12, 0.15)' }}
-          >
-            <span
-              className="font-black text-[#0C0C0C] leading-none"
-              style={{ fontSize: 'clamp(3rem, 10vw, 140px)' }}
-            >
-              {service.number}
-            </span>
-            <div className="flex flex-col gap-2 sm:gap-3 pt-2">
-              <h3
-                className="text-[#0C0C0C] font-medium uppercase"
-                style={{ fontSize: 'clamp(1rem, 2.2vw, 2.1rem)' }}
-              >
-                {service.name}
-              </h3>
-              <p
-                className="text-[#0C0C0C] font-light leading-relaxed max-w-2xl"
-                style={{
-                  fontSize: 'clamp(0.85rem, 1.6vw, 1.25rem)',
-                  opacity: 0.6,
-                }}
-              >
-                {service.description}
-              </p>
-            </div>
-          </div>
-        </FadeIn>
-      ))}
-    </div>
-
-  </section>
-);
-
-/* ============================================================
-   5. PROJECTS SECTION — live embedded sites
-   ============================================================ */
-
-interface Project {
-  number: string;
-  name: string;
-  category: string;
-  description: string;
-  url: string;
-}
-
-const PROJECTS: Project[] = [
-  {
-    number: '01',
-    name: 'Architecture',
-    category: 'Web Design',
-    description:
-      'A bold architecture studio website with immersive visuals and a clean, editorial layout.',
-    url: 'https://hitu-code23.github.io/Architecture-/',
-  },
-  {
-    number: '02',
-    name: 'Velorien',
-    category: 'Brand Website',
-    description:
-      'A modern brand experience built around striking typography, motion, and storytelling.',
-    url: 'https://hitu-code23.github.io/Velorien/',
-  },
-  {
-    number: '03',
-    name: 'GearMyCycle',
-    category: 'Web App',
-    description:
-      'A cycling-focused web experience with product showcases and a smooth, responsive interface.',
-    url: 'https://hitu-code23.github.io/GearMyCycle/',
-  },
+var PROJECTS = [
+  { number: '01', name: 'Architecture', category: 'Web Design', description: 'A bold architecture studio website with immersive visuals and a clean, editorial layout.', url: 'https://hitu-code23.github.io/Architecture-/' },
+  { number: '02', name: 'Velorien', category: 'Brand Website', description: 'A modern brand experience built around striking typography, motion, and storytelling.', url: 'https://hitu-code23.github.io/Velorien/' },
+  { number: '03', name: 'GearMyCycle', category: 'Web App', description: 'A cycling-focused web experience with product showcases and a smooth, responsive interface.', url: 'https://hitu-code23.github.io/GearMyCycle/' }
 ];
 
-interface ProjectCardProps {
-  project: Project;
-  index: number;
-  total: number;
-  progress: MotionValue<number>;
-}
-
-const ProjectCard: React.FC<ProjectCardProps> = ({
-  project,
-  index,
-  total,
-  progress,
-}) => {
-  const targetScale = 1 - (total - 1 - index) * 0.03;
-  const scale = useTransform(progress, [index / total, 1], [1, targetScale]);
-
-  return (
-    <div className="h-[85vh]">
-      <motion.div
-        style={{ scale, top: `calc(6rem + ${index * 28}px)` }}
-        className="sticky rounded-[40px] sm:rounded-[50px] md:rounded-[60px] border-2 border-[#D7E2EA] bg-[#0C0C0C] p-4 sm:p-6 md:p-8 flex flex-col gap-4 sm:gap-6"
-      >
-        {/* Top row */}
-        <div className="flex flex-wrap items-start justify-between gap-4 sm:gap-6">
-          <div className="flex items-start gap-4 sm:gap-8">
-            <span
-              className="hero-heading font-black leading-none"
-              style={{ fontSize: 'clamp(3rem, 10vw, 140px)' }}
-            >
-              {project.number}
-            </span>
-            <div className="flex flex-col gap-1 sm:gap-2 pt-2">
-              <span
-                className="text-[#D7E2EA] font-light uppercase tracking-widest"
-                style={{ fontSize: 'clamp(0.7rem, 1.2vw, 1rem)', opacity: 0.6 }}
-              >
-                {project.category}
-              </span>
-              <h3
-                className="text-[#D7E2EA] font-medium uppercase leading-tight"
-                style={{ fontSize: 'clamp(1.1rem, 2.4vw, 2.1rem)' }}
-              >
-                {project.name}
-              </h3>
-              <p
-                className="text-[#D7E2EA] font-light leading-relaxed max-w-md hidden sm:block"
-                style={{ fontSize: 'clamp(0.8rem, 1.3vw, 1rem)', opacity: 0.6 }}
-              >
-                {project.description}
-              </p>
-            </div>
-          </div>
-          <LiveProjectButton href={project.url} />
-        </div>
-
-        {/* Live embedded site — the project running inside the card */}
-        <div className="relative flex-1 rounded-[28px] sm:rounded-[36px] md:rounded-[44px] overflow-hidden border border-[#D7E2EA]/25 bg-[#0C0C0C]">
-          <span className="absolute top-4 left-4 z-10 flex items-center gap-2 rounded-full bg-[#0C0C0C]/80 backdrop-blur px-4 py-1.5 text-[#D7E2EA] uppercase tracking-widest text-[10px] sm:text-xs font-medium pointer-events-none">
-            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            Live
-          </span>
-          <iframe
-            src={project.url}
-            title={`${project.name} — live project by ${IDENTITY.name}`}
-            loading="lazy"
-            className="w-full border-0"
-            style={{ height: 'clamp(320px, 52vh, 560px)' }}
-            sandbox="allow-scripts allow-same-origin allow-popups"
-          />
-        </div>
-      </motion.div>
-    </div>
-  );
-};
-
-const ProjectsSection: React.FC = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ['start start', 'end end'],
+/* ============================================================
+   BUILD MARQUEE ROWS (tripled for seamless scrolling)
+   ============================================================ */
+function buildMarqueeRow(el, images) {
+  var tripled = images.concat(images, images);
+  tripled.forEach(function (src) {
+    var img = document.createElement('img');
+    img.src = src;
+    img.alt = 'Web design showcase';
+    img.loading = 'lazy';
+    img.draggable = false;
+    el.appendChild(img);
   });
-
-  return (
-    <section
-      id="projects"
-      className="relative z-10 bg-[#0C0C0C] rounded-t-[40px] sm:rounded-t-[50px] md:rounded-t-[60px] -mt-10 sm:-mt-12 md:-mt-14 px-5 sm:px-8 md:px-10 py-20 sm:py-24 md:py-32"
-    >
-      <FadeIn y={40}>
-        <h2
-          className="hero-heading font-black uppercase text-center mb-16 sm:mb-20 md:mb-28"
-          style={{ fontSize: 'clamp(3rem, 12vw, 160px)' }}
-        >
-          Project
-        </h2>
-      </FadeIn>
-
-      <div ref={containerRef} className="max-w-6xl mx-auto">
-        {PROJECTS.map((project, i) => (
-          <ProjectCard
-            key={project.number}
-            project={project}
-            index={i}
-            total={PROJECTS.length}
-            progress={scrollYProgress}
-          />
-        ))}
-      </div>
-    </section>
-  );
-};
+}
+var row1El = document.getElementById('marquee-row-1');
+var row2El = document.getElementById('marquee-row-2');
+buildMarqueeRow(row1El, MARQUEE_IMAGES.slice(0, 11));
+buildMarqueeRow(row2El, MARQUEE_IMAGES.slice(11));
 
 /* ============================================================
-   6. CONTACT SECTION + FOOTER
+   BUILD SERVICES LIST
    ============================================================ */
-
-
-const ContactSection: React.FC = () => (
-  <section
-    id="contact"
-    className="bg-[#0C0C0C] px-5 sm:px-8 md:px-10 py-20 sm:py-24 md:py-32 flex flex-col items-center gap-10 sm:gap-14"
-  >
-    <FadeIn y={40}>
-      <h2
-        className="hero-heading font-black uppercase text-center leading-none tracking-tight"
-        style={{ fontSize: 'clamp(3rem, 12vw, 160px)' }}
-      >
-        Contact
-      </h2>
-    </FadeIn>
-
-    <FadeIn delay={0.15} className="flex flex-col items-center gap-4 sm:gap-6">
-      <a
-        href={`mailto:${IDENTITY.email}`}
-        className="flex items-center gap-3 text-[#D7E2EA] font-medium hover:opacity-70 transition-opacity duration-200"
-        style={{ fontSize: 'clamp(1.1rem, 3vw, 2rem)' }}
-      >
-        <Mail className="w-6 h-6 sm:w-8 sm:h-8" aria-hidden="true" />
-        {IDENTITY.email}
-      </a>
-      <a
-        href={IDENTITY.phoneHref}
-        className="flex items-center gap-3 text-[#D7E2EA] font-medium hover:opacity-70 transition-opacity duration-200"
-        style={{ fontSize: 'clamp(1.1rem, 3vw, 2rem)' }}
-      >
-        <Phone className="w-6 h-6 sm:w-8 sm:h-8" aria-hidden="true" />
-        {IDENTITY.phone}
-      </a>
-    </FadeIn>
-
-    <FadeIn delay={0.3}>
-      <ContactButton />
-    </FadeIn>
-  </section>
-);
-
-const Footer: React.FC = () => (
-  <footer
-    className="bg-[#0C0C0C] px-6 md:px-10 py-8 flex flex-col sm:flex-row items-center justify-between gap-3"
-    style={{ borderTop: '1px solid rgba(215, 226, 234, 0.15)' }}
-  >
-    <span className="text-[#D7E2EA] font-light uppercase tracking-wider text-xs sm:text-sm opacity-60">
-      © {new Date().getFullYear()} {IDENTITY.name}. All rights reserved.
-    </span>
-    <span className="text-[#D7E2EA] font-light uppercase tracking-wider text-xs sm:text-sm opacity-60">
-      Montréal, QC · {IDENTITY.phone}
-    </span>
-  </footer>
-);
+var servicesList = document.getElementById('services-list');
+SERVICES.forEach(function (s, i) {
+  var item = document.createElement('div');
+  item.className = 'service-item';
+  item.setAttribute('data-fade', '');
+  item.style.setProperty('--fade-delay', (i * 0.1) + 's');
+  item.innerHTML =
+    '<span class="service-number">' + s.number + '</span>' +
+    '<div class="service-info"><h3>' + s.name + '</h3><p>' + s.description + '</p></div>';
+  servicesList.appendChild(item);
+});
 
 /* ============================================================
-   APP
+   BUILD PROJECT CARDS (live iframe embeds)
    ============================================================ */
+var projectsStack = document.getElementById('projects-stack');
+PROJECTS.forEach(function (p, i) {
+  var slot = document.createElement('div');
+  slot.className = 'card-slot';
+  var card = document.createElement('div');
+  card.className = 'project-card';
+  card.style.top = 'calc(6rem + ' + (i * 28) + 'px)';
+  card.setAttribute('data-card-index', i);
+  card.innerHTML =
+    '<div class="card-top">' +
+      '<div class="card-title-group">' +
+        '<span class="card-number hero-heading">' + p.number + '</span>' +
+        '<div class="card-meta">' +
+          '<span class="card-category">' + p.category + '</span>' +
+          '<h3 class="card-name">' + p.name + '</h3>' +
+          '<p class="card-desc">' + p.description + '</p>' +
+        '</div>' +
+      '</div>' +
+      '<a class="ghost-btn" href="' + p.url + '" target="_blank" rel="noopener noreferrer">Live Project' +
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>' +
+      '</a>' +
+    '</div>' +
+    '<div class="card-live">' +
+      '<span class="live-badge"><span class="live-dot"></span>Live</span>' +
+      '<iframe src="' + p.url + '" title="' + p.name + ' — live project by MR.RJ Web Montreal" loading="lazy" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>' +
+    '</div>';
+  slot.appendChild(card);
+  projectsStack.appendChild(slot);
+});
 
-const App: React.FC = () => (
-  <main className="bg-[#0C0C0C]" style={{ overflowX: 'clip' }}>
-    <HeroSection />
-    <MarqueeSection />
-    <AboutSection />
-    <ServicesSection />
-    <ProjectsSection />
-    <ContactSection />
-    <Footer />
-  </main>
-);
+/* ============================================================
+   FADE-IN ON SCROLL (IntersectionObserver, once)
+   ============================================================ */
+var fadeEls = document.querySelectorAll('[data-fade]');
+if ('IntersectionObserver' in window) {
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { rootMargin: '50px' });
+  fadeEls.forEach(function (el) { io.observe(el); });
+} else {
+  fadeEls.forEach(function (el) { el.classList.add('is-visible'); });
+}
 
-export default App;
+/* ============================================================
+   MAGNET EFFECT (hero portrait)
+   ============================================================ */
+(function () {
+  var magnet = document.getElementById('magnet');
+  if (!magnet) return;
+  var padding = parseFloat(magnet.getAttribute('data-padding')) || 100;
+  var strength = parseFloat(magnet.getAttribute('data-strength')) || 2;
+  var active = false;
+
+  window.addEventListener('mousemove', function (e) {
+    var rect = magnet.getBoundingClientRect();
+    var cx = rect.left + rect.width / 2;
+    var cy = rect.top + rect.height / 2;
+    var dx = Math.abs(cx - e.clientX);
+    var dy = Math.abs(cy - e.clientY);
+
+    if (dx < rect.width / 2 + padding && dy < rect.height / 2 + padding) {
+      if (!active) { active = true; magnet.style.transition = 'transform 0.3s ease-out'; }
+      var x = (e.clientX - cx) / strength;
+      var y = (e.clientY - cy) / strength;
+      magnet.style.transform = 'translate3d(' + x + 'px, ' + y + 'px, 0)';
+    } else if (active) {
+      active = false;
+      magnet.style.transition = 'transform 0.6s ease-in-out';
+      magnet.style.transform = 'translate3d(0, 0, 0)';
+    }
+  }, { passive: true });
+})();
+
+/* ============================================================
+   SCROLL-DRIVEN EFFECTS
+   (marquee, animated text, project card stacking)
+   ============================================================ */
+var marqueeSection = document.getElementById('marquee');
+var animatedTextEl = document.getElementById('animated-text');
+var projectCards = document.querySelectorAll('.project-card');
+var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* --- split about text into characters --- */
+var charLit = [];
+(function () {
+  var text = animatedTextEl.textContent;
+  animatedTextEl.textContent = '';
+  var frag = document.createDocumentFragment();
+  for (var i = 0; i < text.length; i++) {
+    var wrap = document.createElement('span');
+    wrap.className = 'char';
+    var ghost = document.createElement('span');
+    ghost.className = 'ghost';
+    ghost.textContent = text[i];
+    var lit = document.createElement('span');
+    lit.className = 'lit';
+    lit.textContent = text[i];
+    wrap.appendChild(ghost);
+    wrap.appendChild(lit);
+    frag.appendChild(wrap);
+    charLit.push(lit);
+  }
+  animatedTextEl.appendChild(frag);
+})();
+
+function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+
+function onScroll() {
+  var scrollY = window.scrollY;
+  var vh = window.innerHeight;
+
+  /* --- marquee: rows translate based on scroll offset --- */
+  var mRect = marqueeSection.getBoundingClientRect();
+  var sectionTop = mRect.top + scrollY;
+  var offset = (scrollY - sectionTop + vh) * 0.3;
+  row1El.style.transform = 'translateX(' + (offset - 200) + 'px)';
+  row2El.style.transform = 'translateX(' + (-(offset - 200)) + 'px)';
+
+  /* --- animated text: char opacity from 0.2 to 1 ---
+     progress 0 when element top hits 80% of viewport,
+     progress 1 when element bottom hits 20% of viewport */
+  var tRect = animatedTextEl.getBoundingClientRect();
+  var start = vh * 0.8;
+  var end = vh * 0.2;
+  var total = (start - end) + tRect.height;
+  var progress = clamp01((start - tRect.top) / total);
+  var n = charLit.length;
+  for (var i = 0; i < n; i++) {
+    var cs = i / n;
+    var ce = (i + 1) / n;
+    var p = clamp01((progress - cs) / (ce - cs));
+    charLit[i].style.opacity = String(0.2 + p * 0.8);
+  }
+
+  /* --- project cards: scale down as you scroll past (stacking) --- */
+  if (!reducedMotion && projectCards.length) {
+    var stack = document.getElementById('projects-stack');
+    var sRect = stack.getBoundingClientRect();
+    var stackTop = sRect.top + scrollY;
+    var stackProgress = clamp01((scrollY - stackTop) / (stack.offsetHeight - vh));
+    var totalCards = projectCards.length;
+    projectCards.forEach(function (card, index) {
+      var targetScale = 1 - (totalCards - 1 - index) * 0.03;
+      var segStart = index / totalCards;
+      var p = clamp01((stackProgress - segStart) / (1 - segStart));
+      var scale = 1 + (targetScale - 1) * p;
+      card.style.transform = 'scale(' + scale + ')';
+    });
+  }
+}
+
+window.addEventListener('scroll', onScroll, { passive: true });
+window.addEventListener('resize', onScroll, { passive: true });
+onScroll();
+
+/* footer year */
+document.getElementById('footer-copy').textContent =
+  '© ' + new Date().getFullYear() + ' MR.RJ Web Montreal. All rights reserved.';
+</script>
+</body>
+</html>
